@@ -1,0 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+body {
+  font-family: 'Fredoka One', cursive;
+  background: linear-gradient(135deg, #89f7fe, #66a6ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.container {
+  text-align: center;
+  background: white;
+  padding: 20px 30px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+h1 {
+  margin-bottom: 10px;
+  font-size: 2.5rem;
+  color: #333;
+}
+
+#game {
+  display: grid;
+  grid-template-columns: repeat(3, 100px);
+  grid-gap: 10px;
+  margin: 20px auto;
+}
+
+.cell {
+  width: 100px;
+  height: 100px;
+  background: #fefefe;
+  font-size: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: transform 0.2s, background 0.3s, color 0.3s;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  color: #222;
+}
+
+.cell:hover {
+  background: #d0f0ff;
+  transform: scale(1.05);
+}
+
+.cell.win {
+  background: #abffab !important;
+  animation: blink 0.4s infinite alternate;
+}
+
+@keyframes blink {
+  from { background-color: #abffab; }
+  to { background-color: #67e667; }
+}
+
+#status {
+  margin-top: 15px;
+  font-size: 1.5rem;
+}
+
+.buttons {
+  margin-top: 15px;
+}
+
+button {
+  background: #66a6ff;
+  color: white;
+  font-size: 1rem;
+  padding: 10px 15px;
+  margin: 5px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background: #4d90fe;
+}
+
+.scoreboard {
+  display: flex;
+  justify-content: space-around;
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.dark-toggle {
+  margin-bottom: 10px;
+  background: #333;
+  color: white;
+  padding: 6px 15px;
+  border-radius: 15px;
+  cursor: pointer;
+}
+
+/* 🌙 Dark Mode */
+body.dark {
+  background: #121212;
+}
+body.dark .container {
+  background: black;
+  color: white;
+}
+body.dark .cell {
+  background: #2e2e2e;
+  color: white;
+}

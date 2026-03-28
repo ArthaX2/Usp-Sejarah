@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic Tac Toe</title>
+<!--
+  ==========================
+  TIC TAC TOE – HTML/CSS/JS
+  Fitur:
+    • Mode Vs Komputer atau Vs Teman
+    • AI sederhana (menang > blokir > tengah > sudut > sisi)
+    • Deteksi menang & seri
+    • Pilih warna simbol X & O
+    • Papan & skor ditampilkan setiap giliran
+    • Reset papan & reset skor
+    • Animasi pop & tilt pada sel
+  ==========================
+-->
+<style>
+/* ——♢  VARIABEL & DASAR  ♢—— */
+:root {
+  --cell-size: 120px;         /* ukuran kotak */
+  --line-color: #444;         /* warna garis (jika dipakai) */
+}
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg,#fdfcfb 0%,#e2d1c3 100%);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  min-height:100vh;
+  margin:0;
+  padding:2rem;
+}
+h1{margin:0 0 1rem;font-size:2.5rem;}
+
+/* ——♢  PAPAN 3×3  ♢—— */
+.board {
+  display:grid;
+  grid-template-columns: repeat(3, var(--cell-size));
+  grid-template-rows: repeat(3, var(--cell-size));
+  gap:10px;
+  margin:1rem 0;
+  perspective: 800px;           /* untuk efek hover 3D */
+}
+.cell {
+  width:var(--cell-size);
+  height:var(--cell-size);
+  background:#fff;
+  border-radius:20px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.15);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:4rem;
+  cursor:pointer;
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+.cell:hover {transform:rotateX(10deg) rotateY(10deg) scale(1.05);} /* tilt saat hover */
+.cell.disabled{cursor:default;}
+
+/* ——♢  LAYOUT & KONTROL  ♢—— */
+.controls,.score-board{
+  display:flex;
+  gap:1rem;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:center;
+  margin-top:1rem;
+}
+
+button {
+  padding:0.5rem 1rem;
+  font-size:1rem;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  transition:transform 0.2s ease;
+  box-shadow:0 3px 6px rgba(0,0,0,0.1);
+}
+button:hover{transform:translateY(-2px);} /* sedikit naik saat hover */
+.mode-btn.active{background:#ffbb00;color:#fff;} /* highlight mode aktif */
+
+#message {font-size:1.2rem;height:1.6rem;}
+
+/* ——♢  ANIMASI POP  ♢—— */
+@keyframes pop {
+  0%{transform:scale(0);} 50%{transform:scale(1.2);} 100%{transform:scale(1);} }
+.symbol {animation: pop 0.3s ease;}
+</style>
+</head>
+<body>
+  <h1>Tic Tac Toe</h1>
+
+  <!-- ———  PILIH MODE & WARNA  ——— -->
+  <div class="controls">
+     <button id="aiMode" class="mode-btn active">Vs Komputer</button>
+     <button id="friendMode" class="mode-btn">Vs Teman</button>
+
+     <label>Pilih warna X: <input type="color" id="colorX" value="#ff5722"></label>
+     <label>Pilih warna O: <input type="color" id="colorO" value="#2196f3"></label>
+  </div>
+
+  <!-- ———  SKOR  ——— -->
+  <div class="score-board">
+     <div id="scoreX">X: 0</div>
+     <div id="scoreO">O: 0</div>
+     <div id="draws">Seri: 0</div>
+  </div>
+
+  <div id="message"></div>
+
+  <!-- ———  PAPAN  ——— -->
+  <div class="board" id="board"><!-- sel di‑generate JS —></div>
+
+  <!-- ———  TOMBOL RESET  ——— -->
+  <div class="controls">
+     <button id="resetBoard">Reset Board</button>
+     <button id="resetAll">Reset Semua</button>
+  </div>
+
+<script>
+/* =====================================================
+   TIC TAC TOE ✦ JavaScript Logic
+   =====================================================*/
+
+// ——♢  Seleksi elemen DOM  ♢——
+const boardElement   = document.getElementById('board');
+const messageEl      = document.getElementById('message');
+const aiBtn          = document.getElementById('aiMode');
+const friendBtn      = document.getElementById('friendMode');
+const colorXInput    = document.getElementById('colorX');
+const colorOInput    = document.getElementById('colorO');
+const scoreXEl       = document.getElementById('scoreX');
+const scoreOEl       = document.getElementById('scoreO');
+const drawsEl        = document.getElementById('draws');
+const resetBoardBtn  = document.getElementById('resetBoard');
+const resetAllBtn    = document.getElementById('resetAll');
+
+// ——♢  Variabel game  ♢——
+let board;               // Array 9 elemen yang menampung 'X', 'O', atau ''
+let currentPlayer;       // 'X' atau 'O'
+let isVsAI = true;       // mode default
+let scores = { X:0, O:0, draws:0 };
+
+/* -----------------------------------------------------
+   1)  GENERATE PAPAN + INISIALISASI
+   -----------------------------------------------------*/
+createCells();
+startGame();
+
+// Generate 9 sel klik‑able
+function createCells(){
+  boardElement.innerHTML='';
+  for(let i=0;i<9;i++){
+    const cell=document.createElement('div');
+    cell.classList.add('cell');
+    cell.dataset.index=i;                 // simpan index di data attr
+    cell.addEventListener('click',handleCellClick);
+    boardElement.appendChild(cell);
+  }
+}
+
+// Mulai / restart satu ronde
+function startGame(){
+  board = Array(9).fill('');
+  currentPlayer = 'X';
+  messageEl.textContent = 'Giliran: Pemain X';
+  [...boardElement.children].forEach(c=>{
+       c.textContent='';
+       c.classList.remove('disabled');
+  });
+  updateColors();
+  // Jika AI memulai sebagai 'O', jalankan giliran AI (bisa di‑custom)
+  if(isVsAI && currentPlayer==='O') aiMove();
+}
+
+/* -----------------------------------------------------
+   2)  HANDLER UI (mode, reset, warna)
+   -----------------------------------------------------*/
+aiBtn.addEventListener('click',()=>toggleMode(true));
+friendBtn.addEventListener('click',()=>toggleMode(false));
+resetBoardBtn.addEventListener('click',startGame);
+resetAllBtn.addEventListener('click',()=>{
+   scores = { X:0, O:0, draws:0 };
+   updateScore();
+   startGame();
+});
+colorXInput.addEventListener('change',updateColors);
+colorOInput.addEventListener('change',updateColors);
+
+function toggleMode(vsAI){
+  isVsAI = vsAI;
+  aiBtn.classList.toggle('active',vsAI);
+  friendBtn.classList.toggle('active',!vsAI);
+  startGame();
+}
+
+/* -----------------------------------------------------
+   3)  INTERAKSI SEL & LOGIKA GILIRAN
+   -----------------------------------------------------*/
+function handleCellClick(e){
+  const idx = e.currentTarget.dataset.index;
+  if(board[idx] || checkWinner(board)) return; // abaikan jika terisi / game selesai
+
+  makeMove(idx,currentPlayer);      // taruh simbol pemain sekarang
+  if(checkEnd()) return;            // cek apakah ronde berakhir
+
+  if(isVsAI){                       // —— Mode vs Komputer ——
+     currentPlayer='O';
+     aiMove();                      // giliran AI
+     checkEnd();
+     currentPlayer='X';             // kembalikan giliran ke Player X
+  }else{                            // —— Mode 2 Pemain ——
+     currentPlayer = currentPlayer==='X'?'O':'X';
+     messageEl.textContent = `Giliran: Pemain ${currentPlayer}`;
+  }
+}
+
+// Taruh simbol di sel index tertentu
+function makeMove(idx,player){
+  board[idx]=player;
+  const cell = boardElement.children[idx];
+  cell.textContent = player;
+  cell.style.color = player==='X'?colorXInput.value:colorOInput.value;
+  cell.classList.add('disabled','symbol');      // non‑aktif + animasi pop
+  setTimeout(()=>cell.classList.remove('symbol'),300);
+}
+
+/* -----------------------------------------------------
+   4)  KECERDASAN MUSUH SEDERHANA
+   -----------------------------------------------------*/
+function aiMove(){
+  const idx = bestMove();
+  if(idx===null) return;             // papan penuh (harusnya tidak terjadi)
+  // Beri jeda kecil agar terlihat "berpikir"
+  setTimeout(()=>{
+     makeMove(idx,'O');
+     if(!checkEnd()){
+        currentPlayer='X';
+        messageEl.textContent='Giliran: Pemain X';
+     }
+  },400);
+}
+
+/* Urutan prioritas AI:
+   1. Menang jika ada langkah menang
+   2. Blokir langkah menang player
+   3. Ambil tengah
+   4. Ambil sudut random
+   5. Ambil sisi random
+*/
+function bestMove(){
+  // 1) Coba setiap sel kosong → jika O menang, ambil
+  for(let i=0;i<9;i++){
+     if(!board[i]){
+        board[i]='O';
+        if(checkWinner(board)==='O'){ board[i]=''; return i; }
+        board[i]='';
+     }
+  }
+  // 2) Cegah X menang
+  for(let i=0;i<9;i++){
+     if(!board[i]){
+        board[i]='X';
+        if(checkWinner(board)==='X'){ board[i]=''; return i; }
+        board[i]='';
+     }
+  }
+  // 3) Tengah
+  if(!board[4]) return 4;
+  // 4) Sudut
+  const corners=[0,2,6,8].filter(i=>!board[i]);
+  if(corners.length) return corners[Math.floor(Math.random()*corners.length)];
+  // 5) Sisi
+  const sides=[1,3,5,7].filter(i=>!board[i]);
+  if(sides.length) return sides[Math.floor(Math.random()*sides.length)];
+  return null;
+}
+
+/* -----------------------------------------------------
+   5)  CEK MENANG / SERI & PERBARUI SKOR
+   -----------------------------------------------------*/
+function checkWinner(b){
+  const wins =[
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+  for(const combo of wins){
+     const [a,b2,c]=combo;
+     if(b[a] && b[a]===b[b2] && b[a]===b[c]) return b[a];
+  }
+  return null;
+}
+
+function checkEnd(){
+  const winner = checkWinner(board);
+  if(winner){
+     messageEl.textContent = `Pemain ${winner} menang!`;
+     winner==='X'?scores.X++:scores.O++;
+     endGame();
+     return true;
+  }
+  if(board.every(x=>x)){
+     messageEl.textContent = 'Seri!';
+     scores.draws++;
+     endGame();
+     return true;
+  }
+  return false;
+}
+
+function endGame(){
+   [...boardElement.children].forEach(c=>c.classList.add('disabled'));
+   updateScore();
+}
+
+/* -----------------------------------------------------
+   6)  UTILITAS UI (warna & skor)
+   -----------------------------------------------------*/
+function updateColors(){
+  // Sesuaikan warna simbol yang sudah ada (jika pemain ganti warna di tengah game)
+  [...boardElement.children].forEach(c=>{
+     if(c.textContent==='X') c.style.color=colorXInput.value;
+     if(c.textContent==='O') c.style.color=colorOInput.value;
+  });
+}
+
+function updateScore(){
+   scoreXEl.textContent = `X: ${scores.X}`;
+   scoreOEl.textContent = `O: ${scores.O}`;
+   drawsEl.textContent  = `Seri: ${scores.draws}`;
+}
+</script>
+</body>
+</html>

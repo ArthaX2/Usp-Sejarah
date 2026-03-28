@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulasi USP Informatika Umum</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #a78bfa;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --correct: #10b981;
+    --wrong: #ef4444;
+    --border: rgba(0,229,255,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(0,229,255,0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(167,139,250,0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2.5rem 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent3), var(--accent2));
+  }
+
+  .badge {
+    display: inline-block;
+    background: rgba(0,229,255,0.1);
+    border: 1px solid rgba(0,229,255,0.3);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 100px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    font-size: clamp(1.5rem, 4vw, 2.2rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+  }
+
+  header p {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 1.8rem;
+    font-weight: 800;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .stat-num.blue { color: var(--accent); }
+  .stat-num.purple { color: var(--accent3); }
+  .stat-num.orange { color: var(--accent2); }
+
+  .stat-label {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 0.25rem;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 2.5rem 0 1.5rem;
+  }
+
+  .section-tag {
+    background: var(--accent);
+    color: #000;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .section-tag.purple { background: var(--accent3); }
+  .section-tag.orange { background: var(--accent2); }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin-bottom: 1.2rem;
+    transition: border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .question-card:hover {
+    border-color: rgba(0,229,255,0.3);
+  }
+
+  .question-card.answered-correct {
+    border-color: var(--correct) !important;
+    background: rgba(16,185,129,0.05);
+  }
+
+  .question-card.answered-wrong {
+    border-color: var(--wrong) !important;
+    background: rgba(239,68,68,0.05);
+  }
+
+  .q-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .q-topic {
+    background: rgba(167,139,250,0.1);
+    color: var(--accent3);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.65rem;
+  }
+
+  .q-text {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+    color: var(--text);
+  }
+
+  .q-text code {
+    background: #0d1117;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #79c0ff;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85em;
+  }
+
+  pre.code-block {
+    background: #0d1117;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    color: #e6edf3;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+
+  pre.code-block .kw { color: #ff7b72; }
+  pre.code-block .fn { color: #d2a8ff; }
+  pre.code-block .str { color: #a5d6ff; }
+  pre.code-block .num { color: #f8c555; }
+  pre.code-block .cm { color: #8b949e; font-style: italic; }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    background: var(--surface2);
+    user-select: none;
+  }
+
+  .option:hover {
+    border-color: rgba(0,229,255,0.3);
+    background: rgba(0,229,255,0.05);
+  }
+
+  .option.selected {
+    border-color: var(--accent);
+    background: rgba(0,229,255,0.08);
+  }
+
+  .option.correct {
+    border-color: var(--correct) !important;
+    background: rgba(16,185,129,0.1) !important;
+  }
+
+  .option.wrong {
+    border-color: var(--wrong) !important;
+    background: rgba(239,68,68,0.1) !important;
+  }
+
+  .option input[type="radio"],
+  .option input[type="checkbox"] {
+    accent-color: var(--accent);
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .feedback {
+    margin-top: 0.75rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-family: 'Space Mono', monospace;
+    display: none;
+  }
+
+  .feedback.show { display: block; }
+  .feedback.correct { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+  .feedback.wrong { background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+
+  .multi-hint {
+    font-size: 0.72rem;
+    font-family: 'Space Mono', monospace;
+    color: var(--accent2);
+    margin-bottom: 0.75rem;
+    background: rgba(255,107,53,0.08);
+    border: 1px solid rgba(255,107,53,0.2);
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    display: inline-block;
+  }
+
+  .essay-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .essay-card textarea {
+    width: 100%;
+    min-height: 130px;
+    background: #0d1117;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.9rem 1rem;
+    resize: vertical;
+    margin-top: 0.75rem;
+    line-height: 1.6;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  .essay-card textarea:focus {
+    border-color: rgba(0,229,255,0.4);
+  }
+
+  .essay-hint {
+    margin-top: 1rem;
+    padding: 0.8rem 1rem;
+    background: rgba(167,139,250,0.06);
+    border: 1px solid rgba(167,139,250,0.2);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: var(--accent3);
+  }
+
+  .essay-hint strong {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .essay-hint ul {
+    padding-left: 1.2rem;
+  }
+
+  .essay-hint li {
+    margin-bottom: 0.3rem;
+    color: #c4b5fd;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 0.8rem 2rem;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    flex: 1;
+  }
+
+  .btn-primary:hover {
+    background: #33ecff;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 25px rgba(0,229,255,0.25);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .btn-secondary:hover {
+    border-color: rgba(255,255,255,0.3);
+    color: var(--text);
+  }
+
+  .score-panel {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    margin-top: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .score-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+  }
+
+  .score-panel.show { display: block; }
+
+  .score-num {
+    font-size: 4rem;
+    font-weight: 800;
+    font-family: 'Space Mono', monospace;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .score-msg {
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    margin-top: 0.5rem;
+  }
+
+  .progress-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    padding: 0.6rem 0;
+    margin-bottom: 1rem;
+  }
+
+  .progress-track {
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    border-radius: 2px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .progress-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-bottom: 0.4rem;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  @media (max-width: 600px) {
+    .stats-bar { grid-template-columns: 1fr; }
+    .btn-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div class="badge">📚 Simulasi USP 2024/2025</div>
+  <h1>Informatika Umum</h1>
+  <p>45 soal · Pilgan, Multi-Pilih & Essay · C++</p>
+</header>
+
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-num blue">30</div>
+    <div class="stat-label">Pilihan Ganda</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num purple">10</div>
+    <div class="stat-label">Multi Pilih</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num orange">5</div>
+    <div class="stat-label">Essay</div>
+  </div>
+</div>
+
+<div class="progress-bar">
+  <div class="progress-label">
+    <span>Progress</span>
+    <span id="progress-text">0 / 40 terjawab</span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+</div>
+
+<!-- ===== BAGIAN A: PILIHAN GANDA ===== -->
+<div class="section-header">
+  <div class="section-tag">Bagian A</div>
+  <div class="section-title">Pilihan Ganda — 30 Soal (1 Jawaban Benar)</div>
+  <div class="section-line"></div>
+</div>
+
+<div id="pg-container"></div>
+
+<!-- ===== BAGIAN B: MULTI PILIH ===== -->
+<div class="section-header">
+  <div class="section-tag purple">Bagian B</div>
+  <div class="section-title">Pilihan Ganda Kompleks — 10 Soal (≥2 Jawaban Benar)</div>
+  <div class="section-line"></div>
+</div>
+
+<div id="multi-container"></div>
+
+<!-- ===== BAGIAN C: ESSAY ===== -->
+<div class="section-header">
+  <div class="section-tag orange">Bagian C</div>
+  <div class="section-title">Essay — 5 Soal</div>
+  <div class="section-line"></div>
+</div>
+
+<div id="essay-container"></div>
+
+<div class="btn-row">
+  <button class="btn btn-secondary" onclick="resetQuiz()">🔄 Reset</button>
+  <button class="btn btn-primary" onclick="checkAll()">✅ Periksa Jawaban Pilgan</button>
+</div>
+
+<div class="score-panel" id="score-panel">
+  <div class="score-num" id="score-num">0/40</div>
+  <div class="score-msg" id="score-msg"></div>
+</div>
+
+</div>
+
+<script>
+const pgQuestions = [
+  // 1. Algoritma & Pemrograman
+  {
+    num: 1, topic: "Algoritma & Pemrograman",
+    q: "Perhatikan potongan kode C++ berikut:\n<pre>int x = 5;\nint y = 3;\nx = x + y;\ny = x - y;\nx = x - y;\ncout << x << \" \" << y;</pre>\nApa output yang dihasilkan?",
+    opts: ["3 5", "5 3", "8 3", "3 8"], ans: 0
+  },
+  {
+    num: 2, topic: "Algoritma & Pemrograman",
+    q: "Perhatikan kode berikut:\n<pre>for (int i = 1; i <= 5; i++) {\n    if (i % 2 == 0)\n        cout << i << \" \";\n}</pre>\nApa output yang dihasilkan?",
+    opts: ["1 3 5", "2 4", "1 2 3 4 5", "2 4 6"], ans: 1
+  },
+  {
+    num: 3, topic: "Algoritma & Pemrograman",
+    q: "Diketahui array <code>int arr[] = {10, 20, 30, 40, 50};</code> berindeks 0–4. Apa yang terjadi jika program mengakses <code>arr[5]</code>?",
+    opts: ["Menampilkan nilai 0", "Index out of bounds / undefined behavior", "Menampilkan nilai 50", "Program berhenti otomatis dengan pesan error"], ans: 1
+  },
+  {
+    num: 4, topic: "Algoritma & Pemrograman",
+    q: "Fungsi berikut menghitung rata-rata:\n<pre>float rata(int a[], int n) {\n    int sum = 0;\n    for (int i = 0; i < n; i++)\n        sum += a[i];\n    return sum / n;\n}</pre>\nJika dipanggil dengan array {5, 10, 15} dan n=3, hasilnya?",
+    opts: ["10.0", "10", "9", "30"], ans: 0
+  },
+  {
+    num: 5, topic: "Algoritma & Pemrograman",
+    q: "Loop manakah yang berpotensi menyebabkan <strong>infinite loop</strong>?\n<pre>// A\nfor (int i = 0; i < 10; i++)\n    cout << i;\n// B\nint i = 0;\nwhile (i < 10)\n    cout << i;\n// C\nfor (int i = 10; i > 0; i--)\n    cout << i;</pre>",
+    opts: ["A", "B", "C", "Tidak ada"], ans: 1
+  },
+  // 2. Representasi Data
+  {
+    num: 6, topic: "Representasi Data",
+    q: "Berapakah representasi biner dari bilangan desimal 45?",
+    opts: ["101101", "101100", "100101", "110101"], ans: 0
+  },
+  {
+    num: 7, topic: "Representasi Data",
+    q: "Berapa bit minimum yang dibutuhkan untuk merepresentasikan 200 karakter berbeda?",
+    opts: ["6 bit", "7 bit", "8 bit", "9 bit"], ans: 2
+  },
+  {
+    num: 8, topic: "Representasi Data",
+    q: "Dalam sistem grayscale, nilai pixel 0 mewakili warna apa dan membutuhkan berapa bit?",
+    opts: ["Putih, 8 bit", "Hitam, 8 bit", "Hitam, 4 bit", "Abu-abu, 16 bit"], ans: 1
+  },
+  {
+    num: 9, topic: "Representasi Data",
+    q: "Konversi biner 11001010 ke desimal adalah...",
+    opts: ["200", "202", "196", "210"], ans: 1
+  },
+  {
+    num: 10, topic: "Representasi Data",
+    q: "Satu karakter dalam encoding ASCII standar membutuhkan berapa byte?",
+    opts: ["1 byte", "2 byte", "4 byte", "8 byte"], ans: 0
+  },
+  // 3. Logika & Boolean
+  {
+    num: 11, topic: "Logika & Boolean",
+    q: "Hasil dari ekspresi: <code>!(true && false) || (false || true)</code> adalah...",
+    opts: ["false", "true", "undefined", "error"], ans: 1
+  },
+  {
+    num: 12, topic: "Logika & Boolean",
+    q: "Tabel kebenaran untuk A AND B hanya menghasilkan TRUE ketika...",
+    opts: ["A = true, B = false", "A = false, B = true", "A = true, B = true", "A = false, B = false"], ans: 2
+  },
+  {
+    num: 13, topic: "Logika & Boolean",
+    q: "Ekspresi <code>(x > 5) && (x < 15)</code> bernilai TRUE ketika nilai x adalah...",
+    opts: ["x = 5", "x = 10", "x = 15", "x = 20"], ans: 1
+  },
+  // 4. Sistem Komputer & Jaringan
+  {
+    num: 14, topic: "Sistem Komputer & Jaringan",
+    q: "Format IP address IPv4 yang valid adalah...",
+    opts: ["192.168.1.300", "10.0.0.1", "256.0.0.1", "192.168.1.1.1"], ans: 1
+  },
+  {
+    num: 15, topic: "Sistem Komputer & Jaringan",
+    q: "Yang termasuk contoh METADATA dari sebuah file foto adalah...",
+    opts: ["Pixel gambar itu sendiri", "Isi gambar yang terlihat", "Tanggal pembuatan dan ukuran file", "Warna dominan gambar"], ans: 2
+  },
+  {
+    num: 16, topic: "Sistem Komputer & Jaringan",
+    q: "Proses paralel (parallel processing) memiliki keunggulan utama berupa...",
+    opts: ["Menggunakan lebih sedikit memori", "Memproses banyak tugas secara bersamaan", "Menghasilkan output lebih akurat", "Lebih mudah diprogram"], ans: 1
+  },
+  // 5. Keamanan Siber
+  {
+    num: 17, topic: "Keamanan Siber",
+    q: "Caesar Cipher dengan pergeseran 3 akan mengenkripsi huruf 'D' menjadi...",
+    opts: ["A", "F", "G", "E"], ans: 2
+  },
+  {
+    num: 18, topic: "Keamanan Siber",
+    q: "Pada Public Key Encryption, kunci yang digunakan untuk MENGENKRIPSI data adalah...",
+    opts: ["Private key", "Public key", "Symmetric key", "Session key"], ans: 1
+  },
+  {
+    num: 19, topic: "Keamanan Siber",
+    q: "Symmetric encryption berbeda dari Public Key Encryption karena...",
+    opts: ["Lebih lambat", "Menggunakan kunci yang sama untuk enkripsi dan dekripsi", "Tidak bisa digunakan untuk data besar", "Tidak menggunakan kunci sama sekali"], ans: 1
+  },
+  // 6. Kompleksitas & Efisiensi
+  {
+    num: 20, topic: "Kompleksitas Algoritma",
+    q: "Algoritma dengan kompleksitas O(n²) artinya...",
+    opts: ["Waktu eksekusi konstan", "Waktu eksekusi bertambah linear", "Waktu eksekusi bertambah kuadrat seiring bertambahnya input", "Waktu eksekusi berkurang"], ans: 2
+  },
+  {
+    num: 21, topic: "Kompleksitas Algoritma",
+    q: "Manakah yang paling efisien untuk data yang SANGAT besar?",
+    opts: ["O(n²)", "O(n log n)", "O(2ⁿ)", "O(n!)"], ans: 1
+  },
+  // 7. Probabilitas & Simulasi
+  {
+    num: 22, topic: "Probabilitas & Simulasi",
+    q: "Sebuah program menggunakan <code>rand() % 4</code> yang menghasilkan nilai 0, 1, 2, atau 3. Peluang mendapat nilai 0 adalah...",
+    opts: ["25%", "33%", "50%", "10%"], ans: 0
+  },
+  {
+    num: 23, topic: "Probabilitas & Simulasi",
+    q: "Agar fungsi random menghasilkan TRUE dengan peluang 30%, kondisi yang benar adalah...",
+    opts: ["rand() % 100 < 30", "rand() % 100 > 30", "rand() % 30 == 0", "rand() % 10 < 7"], ans: 0
+  },
+  // 8. Abstraksi & Prosedur
+  {
+    num: 24, topic: "Abstraksi & Prosedur",
+    q: "Keuntungan utama menggunakan prosedur/fungsi dalam program adalah...",
+    opts: ["Program menjadi lebih lambat", "Kode dapat digunakan ulang (reusable)", "Membutuhkan lebih banyak memori", "Membuat debugging lebih sulit"], ans: 1
+  },
+  {
+    num: 25, topic: "Abstraksi & Prosedur",
+    q: "Fungsi pencarian linear (linear search) memiliki kompleksitas waktu...",
+    opts: ["O(1)", "O(log n)", "O(n)", "O(n²)"], ans: 2
+  },
+  // 9. Struktur Data & Algoritma
+  {
+    num: 26, topic: "Struktur Data",
+    q: "Array <code>{64, 25, 12, 22, 11}</code> setelah satu iterasi Bubble Sort menjadi...",
+    opts: ["{11, 12, 22, 25, 64}", "{25, 12, 22, 11, 64}", "{25, 64, 12, 22, 11}", "{64, 25, 22, 12, 11}"], ans: 1
+  },
+  {
+    num: 27, topic: "Struktur Data",
+    q: "Operasi <code>push_back()</code> pada vector C++ berfungsi untuk...",
+    opts: ["Menghapus elemen terakhir", "Menambahkan elemen di akhir", "Menambahkan elemen di awal", "Mengurutkan elemen"], ans: 1
+  },
+  // 10. Error & Bug
+  {
+    num: 28, topic: "Error & Bug",
+    q: "Overflow terjadi ketika...",
+    opts: ["Program berjalan terlalu lambat", "Nilai melebihi kapasitas maksimum tipe data", "Array tidak diisi nilainya", "Kondisi if tidak terpenuhi"], ans: 1
+  },
+  {
+    num: 29, topic: "Error & Bug",
+    q: "Tipe error apa yang terjadi ketika program berjalan tanpa crash tapi menghasilkan output yang salah?",
+    opts: ["Syntax error", "Runtime error", "Logical error", "Compile error"], ans: 2
+  },
+  {
+    num: 30, topic: "AP CSP",
+    q: "Manakah yang paling tepat menggambarkan 'abstraksi' dalam pemrograman?",
+    opts: [
+      "Menulis kode tanpa komentar",
+      "Menyembunyikan detail implementasi dan menampilkan hanya fungsi penting",
+      "Menggunakan variabel global",
+      "Membuat program secepat mungkin"
+    ], ans: 1
+  }
+];
+
+const multiQuestions = [
+  {
+    num: 1, topic: "Algoritma & Pemrograman",
+    q: "Manakah pernyataan yang BENAR tentang perulangan <code>for</code> di C++?",
+    opts: [
+      "Digunakan ketika jumlah iterasi sudah diketahui",
+      "Terdiri dari inisialisasi, kondisi, dan increment/decrement",
+      "Tidak bisa memiliki kondisi berhenti",
+      "Dapat digunakan untuk iterasi array"
+    ], ans: [0, 1, 3]
+  },
+  {
+    num: 2, topic: "Representasi Data",
+    q: "Manakah yang termasuk pernyataan BENAR tentang sistem biner?",
+    opts: [
+      "Menggunakan digit 0 dan 1",
+      "Satu byte terdiri dari 8 bit",
+      "Desimal 10 = biner 1100",
+      "Biner 1010 = desimal 10"
+    ], ans: [0, 1, 3]
+  },
+  {
+    num: 3, topic: "Keamanan Siber",
+    q: "Komponen yang terlibat dalam keamanan siber meliputi...",
+    opts: [
+      "Pengguna (user) yang menggunakan password kuat",
+      "Hardware seperti firewall fisik",
+      "Software antivirus",
+      "Hanya perangkat keras saja"
+    ], ans: [0, 1, 2]
+  },
+  {
+    num: 4, topic: "Logika & Boolean",
+    q: "Ekspresi boolean mana yang menghasilkan nilai TRUE?",
+    opts: [
+      "true && false",
+      "true || false",
+      "!false",
+      "false && true"
+    ], ans: [1, 2]
+  },
+  {
+    num: 5, topic: "Sistem Komputer",
+    q: "Manakah yang termasuk METADATA dari sebuah dokumen digital?",
+    opts: [
+      "Tanggal pembuatan file",
+      "Nama pengarang",
+      "Isi teks dokumen",
+      "Ukuran file"
+    ], ans: [0, 1, 3]
+  },
+  {
+    num: 6, topic: "Abstraksi & Prosedur",
+    q: "Keuntungan modularisasi program menggunakan fungsi antara lain...",
+    opts: [
+      "Kode lebih mudah dibaca",
+      "Kode dapat digunakan ulang",
+      "Program selalu lebih cepat",
+      "Debugging lebih mudah karena fungsi bisa diuji terpisah"
+    ], ans: [0, 1, 3]
+  },
+  {
+    num: 7, topic: "Algoritma & Pemrograman",
+    q: "Jenis error yang mungkin muncul dalam program C++ adalah...",
+    opts: [
+      "Syntax error (salah penulisan kode)",
+      "Runtime error (error saat program berjalan)",
+      "Logical error (output salah tapi tidak crash)",
+      "Color error (salah pilih warna tema)"
+    ], ans: [0, 1, 2]
+  },
+  {
+    num: 8, topic: "Kompleksitas Algoritma",
+    q: "Faktor yang mempengaruhi performa program adalah...",
+    opts: [
+      "Jumlah data yang diproses",
+      "Kompleksitas algoritma yang digunakan",
+      "Warna tampilan antarmuka",
+      "Efisiensi penggunaan memori"
+    ], ans: [0, 1, 3]
+  },
+  {
+    num: 9, topic: "Struktur Data",
+    q: "Operasi yang dapat dilakukan pada array/list adalah...",
+    opts: [
+      "Mengakses elemen berdasarkan indeks",
+      "Menambahkan elemen baru",
+      "Menghapus elemen",
+      "Mengubah warna elemen"
+    ], ans: [0, 1, 2]
+  },
+  {
+    num: 10, topic: "Probabilitas & Simulasi",
+    q: "Simulasi komputer menggunakan bilangan random berguna untuk...",
+    opts: [
+      "Mensimulasikan kejadian acak seperti lemparan koin",
+      "Menghitung peluang suatu kejadian",
+      "Menggantikan semua algoritma deterministik",
+      "Pengujian program dengan berbagai kemungkinan input"
+    ], ans: [0, 1, 3]
+  }
+];
+
+const essayQuestions = [
+  {
+    num: 1, topic: "Analisis Program (Loop)",
+    q: `Perhatikan program C++ berikut:
+
+<pre><span class='kw'>#include</span> <span class='str'>&lt;iostream&gt;</span>
+<span class='kw'>using namespace</span> std;
+<span class='kw'>int</span> <span class='fn'>main</span>() {
+    <span class='kw'>int</span> hasil = <span class='num'>0</span>;
+    <span class='kw'>for</span> (<span class='kw'>int</span> i = <span class='num'>1</span>; i <= <span class='num'>5</span>; i++) {
+        hasil += i * i;
+    }
+    cout << <span class='str'>"Hasil: "</span> << hasil;
+    <span class='kw'>return</span> <span class='num'>0</span>;
+}</pre>
+
+(a) Tentukan output program tersebut!
+(b) Jelaskan langkah-langkah eksekusi loop secara detail (trace)!
+(c) Apa yang dimaksud dengan inisialisasi, kondisi berhenti, dan increment pada loop ini?`,
+    hint: ["Output: Hasil: 55 (1+4+9+16+25)", "Trace: i=1 hasil=1, i=2 hasil=5, i=3 hasil=14, i=4 hasil=30, i=5 hasil=55", "Inisialisasi: int i=1 | Kondisi: i<=5 | Increment: i++"]
+  },
+  {
+    num: 2, topic: "Konsep Perulangan",
+    q: `(a) Jelaskan pengertian perulangan (loop) dalam pemrograman!
+(b) Sebutkan dan jelaskan 3 jenis loop dalam C++!
+(c) Kapan sebaiknya menggunakan <code>while</code> dibandingkan <code>for</code>? Berikan contoh situasinya!`,
+    hint: ["Loop = struktur yang mengulang blok kode selama kondisi terpenuhi", "for: jumlah iterasi diketahui | while: kondisi tidak pasti | do-while: minimal 1x eksekusi", "while lebih cocok saat jumlah iterasi tidak diketahui, misal: membaca input sampai user mengetik 'selesai'"]
+  },
+  {
+    num: 3, topic: "Percabangan (Selection)",
+    q: `(a) Jelaskan perbedaan antara <code>if-else</code> dan <code>switch</code> dalam C++!
+(b) Buatlah program C++ sederhana yang meminta input nilai siswa dan menampilkan grade:
+   - 90–100 → A
+   - 75–89 → B
+   - 60–74 → C
+   - di bawah 60 → D
+Gunakan <code>if-else</code>!`,
+    hint: ["if: untuk kondisi range/logika kompleks | switch: untuk nilai tetap (pilihan pasti)", "Gunakan cin untuk input, if-else dengan >= dan && untuk range", "Jangan lupa sertakan #include<iostream> dan using namespace std;"]
+  },
+  {
+    num: 4, topic: "Analisis Program (Perhitungan)",
+    q: `Perhatikan program berikut:
+
+<pre><span class='kw'>int</span> a = <span class='num'>10</span>, b = <span class='num'>4</span>;
+<span class='kw'>int</span> c = a / b;
+<span class='kw'>int</span> d = a % b;
+<span class='kw'>float</span> e = (<span class='kw'>float</span>)a / b;
+cout << c << <span class='str'>" "</span> << d << <span class='str'>" "</span> << e;</pre>
+
+(a) Tentukan output program tersebut!
+(b) Jelaskan perbedaan antara operator <code>/</code> pada integer dan float!
+(c) Apa fungsi operator <code>%</code> (modulo)?`,
+    hint: ["c = 10/4 = 2 (integer division) | d = 10%4 = 2 | e = 10.0/4 = 2.5 → Output: 2 2 2.5", "Integer division membuang sisa | Float division mempertahankan desimal", "Modulo = sisa bagi. Contoh: 10%3 = 1"]
+  },
+  {
+    num: 5, topic: "Algoritma & Coding Dasar",
+    q: `Buatlah program C++ lengkap yang:
+1. Meminta pengguna memasukkan <strong>3 nilai ujian</strong> (Teori, Praktik, Tugas)
+2. Menghitung rata-rata dari ketiga nilai tersebut
+3. Menampilkan status kelulusan:
+   - Rata-rata ≥ 75 → "LULUS"
+   - Rata-rata < 75 → "TIDAK LULUS"
+4. Tampilkan juga nilai rata-ratanya!
+
+Gunakan: <code>cin</code>, <code>cout</code>, <code>if-else</code>`,
+    hint: ["Deklarasi: int teori, praktik, tugas; float rata;", "Hitung: rata = (teori + praktik + tugas) / 3.0;", "Gunakan if (rata >= 75) untuk cek kelulusan"]
+  }
+];
+
+let userPG = {};
+let userMulti = {};
+let totalAnswerable = pgQuestions.length + multiQuestions.length;
+
+function updateProgress() {
+  const answered = Object.keys(userPG).length + Object.keys(userMulti).length;
+  const pct = (answered / totalAnswerable) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').innerText = `${answered} / ${totalAnswerable} terjawab`;
+}
+
+function renderPG() {
+  const container = document.getElementById('pg-container');
+  pgQuestions.forEach((q, idx) => {
+    const div = document.createElement('div');
+    div.className = 'question-card';
+    div.id = `pg-card-${idx}`;
+
+    let codeHtml = q.q.replace(/\n<pre>([\s\S]*?)<\/pre>/g, (_, code) => {
+      return `<pre class="code-block">${code}</pre>`;
+    }).replace(/<code>(.*?)<\/code>/g, '<code>$1</code>');
+
+    let optsHtml = q.opts.map((opt, oi) => `
+      <label class="option" id="pg-opt-${idx}-${oi}">
+        <input type="radio" name="pg-${idx}" value="${oi}" onchange="selectPG(${idx}, ${oi})">
+        <span>${String.fromCharCode(65+oi)}. ${opt}</span>
+      </label>
+    `).join('');
+
+    div.innerHTML = `
+      <div class="q-number">Soal ${q.num} <span class="q-topic">${q.topic}</span></div>
+      <div class="q-text">${codeHtml}</div>
+      <div class="options">${optsHtml}</div>
+      <div class="feedback" id="pg-fb-${idx}"></div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function renderMulti() {
+  const container = document.getElementById('multi-container');
+  multiQuestions.forEach((q, idx) => {
+    const div = document.createElement('div');
+    div.className = 'question-card';
+    div.id = `multi-card-${idx}`;
+
+    let optsHtml = q.opts.map((opt, oi) => `
+      <label class="option" id="multi-opt-${idx}-${oi}">
+        <input type="checkbox" name="multi-${idx}-${oi}" value="${oi}" onchange="selectMulti(${idx}, ${oi}, this.checked)">
+        <span>${String.fromCharCode(65+oi)}. ${opt}</span>
+      </label>
+    `).join('');
+
+    div.innerHTML = `
+      <div class="q-number">Soal M${q.num} <span class="q-topic">${q.topic}</span></div>
+      <div class="multi-hint">⚠ Pilih SEMUA jawaban yang benar</div>
+      <div class="q-text">${q.q}</div>
+      <div class="options">${optsHtml}</div>
+      <div class="feedback" id="multi-fb-${idx}"></div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function renderEssay() {
+  const container = document.getElementById('essay-container');
+  essayQuestions.forEach((q, idx) => {
+    const hintItems = q.hint.map(h => `<li>${h}</li>`).join('');
+    const div = document.createElement('div');
+    div.className = 'essay-card';
+    div.innerHTML = `
+      <div class="q-number">Essay ${q.num} <span class="q-topic">${q.topic}</span></div>
+      <div class="q-text">${q.q}</div>
+      <textarea placeholder="Tulis jawaban kamu di sini..."></textarea>
+      <div class="essay-hint">
+        <strong>💡 Poin Kunci Jawaban</strong>
+        <ul>${hintItems}</ul>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function selectPG(qIdx, optIdx) {
+  userPG[qIdx] = optIdx;
+  updateProgress();
+}
+
+function selectMulti(qIdx, optIdx, checked) {
+  if (!userMulti[qIdx]) userMulti[qIdx] = new Set();
+  if (checked) userMulti[qIdx].add(optIdx);
+  else userMulti[qIdx].delete(optIdx);
+  updateProgress();
+}
+
+function checkAll() {
+  let correct = 0;
+  let total = pgQuestions.length + multiQuestions.length;
+
+  pgQuestions.forEach((q, idx) => {
+    const card = document.getElementById(`pg-card-${idx}`);
+    const fb = document.getElementById(`pg-fb-${idx}`);
+    const selected = userPG[idx];
+
+    q.opts.forEach((_, oi) => {
+      const opt = document.getElementById(`pg-opt-${idx}-${oi}`);
+      opt.classList.remove('correct', 'wrong', 'selected');
+    });
+
+    if (selected !== undefined) {
+      if (selected === q.ans) {
+        correct++;
+        card.className = 'question-card answered-correct';
+        document.getElementById(`pg-opt-${idx}-${selected}`).classList.add('correct');
+        fb.className = 'feedback correct show';
+        fb.innerHTML = '✓ Benar!';
+      } else {
+        card.className = 'question-card answered-wrong';
+        document.getElementById(`pg-opt-${idx}-${selected}`).classList.add('wrong');
+        document.getElementById(`pg-opt-${idx}-${q.ans}`).classList.add('correct');
+        fb.className = 'feedback wrong show';
+        fb.innerHTML = `✗ Kurang tepat. Jawaban benar: ${String.fromCharCode(65+q.ans)}. ${q.opts[q.ans]}`;
+      }
+    } else {
+      card.className = 'question-card answered-wrong';
+      document.getElementById(`pg-opt-${idx}-${q.ans}`).classList.add('correct');
+      fb.className = 'feedback wrong show';
+      fb.innerHTML = `— Belum dijawab. Jawaban benar: ${String.fromCharCode(65+q.ans)}`;
+    }
+  });
+
+  multiQuestions.forEach((q, idx) => {
+    const card = document.getElementById(`multi-card-${idx}`);
+    const fb = document.getElementById(`multi-fb-${idx}`);
+    const selected = userMulti[idx] ? Array.from(userMulti[idx]).sort() : [];
+    const correct_ans = [...q.ans].sort();
+
+    const isCorrect = JSON.stringify(selected) === JSON.stringify(correct_ans);
+
+    q.opts.forEach((_, oi) => {
+      const opt = document.getElementById(`multi-opt-${idx}-${oi}`);
+      opt.classList.remove('correct', 'wrong', 'selected');
+      if (q.ans.includes(oi)) opt.classList.add('correct');
+      else if (selected.includes(oi)) opt.classList.add('wrong');
+    });
+
+    if (isCorrect) {
+      correct++;
+      card.className = 'question-card answered-correct';
+      fb.className = 'feedback correct show';
+      fb.innerHTML = '✓ Benar! Semua jawaban tepat.';
+    } else {
+      card.className = 'question-card answered-wrong';
+      const correctLetters = q.ans.map(i => String.fromCharCode(65+i)).join(', ');
+      fb.className = 'feedback wrong show';
+      fb.innerHTML = `✗ Jawaban benar: ${correctLetters}`;
+    }
+  });
+
+  const pct = Math.round((correct / total) * 100);
+  let msg = '';
+  if (pct >= 85) msg = '🏆 Luar biasa! Kamu siap menghadapi USP!';
+  else if (pct >= 70) msg = '👍 Bagus! Tinggal sedikit lagi perlu diperkuat.';
+  else if (pct >= 50) msg = '📚 Cukup baik, tapi masih perlu banyak belajar lagi.';
+  else msg = '💪 Jangan menyerah! Pelajari kembali materi yang salah ya.';
+
+  const panel = document.getElementById('score-panel');
+  document.getElementById('score-num').innerText = `${correct}/${total}`;
+  document.getElementById('score-msg').innerText = `${pct}% Benar — ${msg}`;
+  panel.className = 'score-panel show';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function resetQuiz() {
+  userPG = {};
+  userMulti = {};
+  document.getElementById('pg-container').innerHTML = '';
+  document.getElementById('multi-container').innerHTML = '';
+  document.getElementById('essay-container').innerHTML = '';
+  document.getElementById('score-panel').className = 'score-panel';
+  renderPG();
+  renderMulti();
+  renderEssay();
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+renderPG();
+renderMulti();
+renderEssay();
+updateProgress();
+</script>
+</body>
+</html>
